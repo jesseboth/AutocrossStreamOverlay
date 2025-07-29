@@ -77,15 +77,15 @@
 <body>
     <div class="container">
         <h1>✅ Certificate Verification Successful!</h1>
-        
+
         <div class="success">
             <h2>🎉 Great! Your certificate is working perfectly.</h2>
             <p>You're seeing this page without any browser warnings, which means the StreamOverlay CA certificate is properly installed.</p>
         </div>
-        
+
         <div class="next-steps">
             <h2>Ready to Use StreamOverlay</h2>
-            
+
             <div class="link-box">
                 <h3>🏎️ Speed & G-Force Overlay</h3>
                 <a href="speed.html" class="overlay-link" id="httpsLink">
@@ -94,7 +94,7 @@
                 <p><small>GPS speed tracking with accelerometer G-force display</small></p>
             </div>
         </div>
-        
+
         <div class="info">
             <h3>📱 Usage Tips:</h3>
             <ul>
@@ -104,7 +104,7 @@
                 <li><strong>Streaming:</strong> Use with IRL Pro or similar streaming software</li>
             </ul>
         </div>
-        
+
         <div class="info">
             <h3>🔗 Access URLs:</h3>
             <ul>
@@ -113,19 +113,19 @@
             </ul>
         </div>
     </div>
-    
+
     <script>
         // Update URLs with current server IP
         const currentIP = window.location.hostname;
         const currentPort = window.location.port;
-        
+
         if (currentIP !== 'localhost') {
             // Update HTTPS link
             const httpsLink = document.getElementById('httpsLink');
             if (window.location.protocol === 'https:') {
                 httpsLink.href = `https://${currentIP}:1900/speed.html`;
             }
-            
+
             // Update displayed URLs
             document.getElementById('httpsUrl').textContent = `https://${currentIP}:1900/speed.html`;
             document.getElementById('httpUrl').textContent = `http://${currentIP}:1901/speed.html`;

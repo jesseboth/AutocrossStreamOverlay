@@ -103,11 +103,11 @@
 <body>
     <div class="container">
         <h1>🔒 StreamOverlay Certificate Installation</h1>
-        
+
         <div class="warning">
             <strong>One-time setup required:</strong> Install the StreamOverlay CA certificate to access the HTTPS overlay without browser warnings.
         </div>
-        
+
         <div class="download-section">
             <h2>Step 1: Download Certificate</h2>
             <a href="/ca.crt" class="download-btn" download="StreamOverlay-CA.crt">
@@ -115,49 +115,49 @@
             </a>
             <p><small>File: StreamOverlay-CA.crt</small></p>
         </div>
-        
+
         <div class="steps">
             <h2>Step 2: Install on Android</h2>
-            
+
             <div class="step">
                 <h3>1. Download Complete</h3>
                 <p>After clicking the download button above, the certificate file will be saved to your Downloads folder.</p>
             </div>
-            
+
             <div class="step">
                 <h3>2. Open Settings</h3>
                 <p>Go to <strong>Settings → Security → Encryption & credentials</strong></p>
                 <p><em>Note: Path may vary by Android version/manufacturer</em></p>
             </div>
-            
+
             <div class="step">
                 <h3>3. Install Certificate</h3>
                 <p>Tap <strong>"Install from device storage"</strong> or <strong>"Install a certificate"</strong></p>
             </div>
-            
+
             <div class="step">
                 <h3>4. Select File</h3>
                 <p>Navigate to Downloads and select <strong>StreamOverlay-CA.crt</strong></p>
             </div>
-            
+
             <div class="step">
                 <h3>5. Name Certificate</h3>
                 <p>Enter name: <strong>StreamOverlay CA</strong></p>
                 <p>Choose usage: <strong>VPN and apps</strong></p>
             </div>
         </div>
-        
+
         <div class="verify-link">
             <h2>Step 3: Verify Installation</h2>
             <a href="verify.html" class="verify-btn">✅ Test Certificate</a>
         </div>
-        
+
         <div class="success">
             <strong>After installation:</strong> Access your speed overlay at<br>
             <span class="ip-display">https://&lt;your-ip&gt;:1900/speed.html</span><br>
             <em>No browser warnings!</em>
         </div>
-        
+
         <script>
             // Try to display the current server IP
             if (window.location.hostname !== 'localhost') {

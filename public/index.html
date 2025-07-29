@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StreamOverlay - Autocross Speed & G-Force Overlay</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Theme colors -->
+    <meta name="theme-color" content="#007BFF">
+    <meta name="msapplication-TileColor" content="#667eea">
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJiZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzY2N2VlYTtzdG9wLW9wYWNpdHk6MSIgLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM3NjRiYTI7c3RvcC1vcGFjaXR5OjEiIC8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSIyNCIgZmlsbD0idXJsKCNiZykiLz48dGV4dCB4PSI5NiIgeT0iMTEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjY0Ij7wn4+O77iPPC90ZXh0Pjx0ZXh0IHg9Ijk2IiB5PSIxNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjAiIGZvbnQtd2VpZ2h0PSJib2xkIj44NSBtcGg8L3RleHQ+PC9zdmc+">
+
+    <!-- iOS Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="StreamOverlay">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -150,7 +165,7 @@
     <div class="container">
         <h1>🏎️ StreamOverlay</h1>
         <p class="subtitle">Autocross Speed & G-Force Overlay for Live Streaming</p>
-        
+
         <div class="status-section">
             <h3>🌐 Server Status</h3>
             <p>
@@ -162,7 +177,7 @@
                 <strong>HTTP Server:</strong> <span id="httpStatus">http://localhost:1901</span>
             </p>
         </div>
-        
+
         <div class="card-grid">
             <div class="card">
                 <div class="emoji">🚀</div>
@@ -170,28 +185,28 @@
                 <p>Displays GPS data from sender or uses local GPS as fallback. Perfect for IRL Pro streaming.</p>
                 <a href="speed.html" class="btn primary">Launch Receiver</a>
             </div>
-            
+
             <div class="card">
                 <div class="emoji">📡</div>
                 <h3>GPS Sender</h3>
                 <p>Tracks GPS and sends data to receiver via P2P connection. Use on device with good GPS signal.</p>
                 <a href="send.html" class="btn" style="background: #17a2b8; border-color: #17a2b8;">Launch Sender</a>
             </div>
-            
+
             <div class="card">
                 <div class="emoji">🔒</div>
                 <h3>Install Certificate</h3>
                 <p>Install the CA certificate on your device to access HTTPS without browser warnings.</p>
                 <a href="install.html" class="btn warning">Install Certificate</a>
             </div>
-            
+
             <div class="card">
                 <div class="emoji">✅</div>
                 <h3>Verify Setup</h3>
                 <p>Test if your certificate is properly installed and working correctly.</p>
                 <a href="verify.html" class="btn success">Verify Certificate</a>
             </div>
-            
+
             <div class="card">
                 <div class="emoji">🔗</div>
                 <h3>P2P Test</h3>
@@ -199,7 +214,7 @@
                 <a href="p2p-test.html" class="btn" style="background: #6f42c1; border-color: #6f42c1;">Test P2P Connection</a>
             </div>
         </div>
-        
+
         <div class="status-section">
             <h3>📱 P2P Setup Guide</h3>
             <ol style="text-align: left; max-width: 500px; margin: 0 auto;">
@@ -210,7 +225,7 @@
                 <li><strong>Visual feedback:</strong> Green border = P2P connected, Blue border = Local GPS</li>
             </ol>
         </div>
-        
+
         <div class="status-section">
             <h3>🔗 Direct Access URLs</h3>
             <div style="font-family: monospace; font-size: 0.9em; text-align: left;">
@@ -219,29 +234,29 @@
                 <p><strong>CA Certificate:</strong> <span id="caUrl">http://localhost:1901/ca.crt</span></p>
             </div>
         </div>
-        
+
         <div class="footer">
             <p>StreamOverlay v1.0 - Built for autocross enthusiasts</p>
             <p>Compatible with IRL Pro, KSWeb, and other streaming platforms</p>
         </div>
     </div>
-    
+
     <script>
         // Update URLs with current server IP
         const currentIP = window.location.hostname;
         const currentPort = window.location.port;
-        
+
         if (currentIP !== 'localhost') {
             // Update status indicators
             document.getElementById('httpsStatus').textContent = `https://${currentIP}:1900`;
             document.getElementById('httpStatus').textContent = `http://${currentIP}:1901`;
-            
+
             // Update direct access URLs
             document.getElementById('httpsUrl').textContent = `https://${currentIP}:1900/speed.html`;
             document.getElementById('httpUrl').textContent = `http://${currentIP}:1901/speed.html`;
             document.getElementById('caUrl').textContent = `http://${currentIP}:1901/ca.crt`;
         }
-        
+
         // Add some interactivity
         document.addEventListener('DOMContentLoaded', function() {
             const cards = document.querySelectorAll('.card');

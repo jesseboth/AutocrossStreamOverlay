@@ -13,16 +13,16 @@ def start():
     if is_running():
         print("Server is already running")
         return
-    
+
     print("Starting HTTPS server daemon...")
-    
+
     # Start daemon process
     pid = os.fork()
     if pid == 0:
         # Child process - become daemon
         os.setsid()  # Create new session
         os.chdir('.')  # Stay in current directory
-        
+
         # Fork again to prevent zombie
         pid2 = os.fork()
         if pid2 == 0:
@@ -30,7 +30,7 @@ def start():
             # Redirect stdin/stdout/stderr
             with open('/dev/null', 'r') as f:
                 os.dup2(f.fileno(), sys.stdin.fileno())
-            
+
             # Execute server
             os.execv(sys.executable, [sys.executable, SERVER_SCRIPT, '--daemon'])
         else:
@@ -52,28 +52,28 @@ def stop():
     if not is_running():
         print("Server is not running")
         return
-    
+
     try:
         with open(PID_FILE, 'r') as f:
             pid = int(f.read().strip())
-        
+
         print(f"Stopping server (PID: {pid})...")
         os.kill(pid, signal.SIGTERM)
-        
+
         # Wait for process to stop
         for _ in range(10):
             time.sleep(0.5)
             if not is_running():
                 print("Server stopped")
                 return
-        
+
         # Force kill if still running
         try:
             os.kill(pid, signal.SIGKILL)
             print("Server force-stopped")
         except ProcessLookupError:
             pass
-            
+
     except (FileNotFoundError, ValueError, ProcessLookupError):
         print("Error stopping server")
         # Clean up stale PID file
@@ -102,20 +102,20 @@ def logs():
 def keys():
     """Generate Certificate Authority and SSL certificates"""
     print("Generating Certificate Authority and SSL certificates...")
-    
+
     # Check if server is running and stop it
     server_was_running = is_running()
     if server_was_running:
         print("Stopping server to generate new keys...")
         stop()
         time.sleep(1)
-    
+
     # Define file paths
     ca_key_file = 'server/ca.key'
     ca_cert_file = 'server/ca.crt'
     cert_file = 'server/server.crt'
     key_file = 'server/server.key'
-    
+
     # Backup existing certificates if they exist
     if os.path.exists(cert_file) or os.path.exists(key_file):
         timestamp = int(time.time())
@@ -124,7 +124,7 @@ def keys():
                 backup_file = f'{file_path}.backup.{timestamp}'
                 os.rename(file_path, backup_file)
                 print(f"Backed up existing file to {backup_file}")
-    
+
     # Generate Certificate Authority and server certificates
     try:
         # Read external IP from .env file
@@ -135,13 +135,13 @@ def keys():
                     if line.startswith('EXTERNAL_IP='):
                         external_ip = line.split('=')[1].strip()
                         break
-        
+
         if not external_ip:
             print("Error: EXTERNAL_IP not found in .env file")
             return
-        
+
         print("Step 1: Creating Certificate Authority...")
-        
+
         # Create CA config
         ca_config = """[req]
 distinguished_name = req_distinguished_name
@@ -161,24 +161,24 @@ basicConstraints = critical, CA:TRUE
 keyUsage = critical, keyCertSign, cRLSign
 subjectKeyIdentifier = hash
 """
-        
+
         with open('server/ca.conf', 'w') as f:
             f.write(ca_config)
-        
+
         # Generate CA private key
         ca_key_cmd = f'openssl genrsa -out {ca_key_file} 2048'
         result1 = os.system(ca_key_cmd)
-        
+
         # Generate CA certificate
         ca_cert_cmd = f'openssl req -new -x509 -key {ca_key_file} -out {ca_cert_file} -days 3650 -config server/ca.conf -extensions v3_ca'
         result2 = os.system(ca_cert_cmd)
-        
+
         if result1 != 0 or result2 != 0:
             print("Error creating Certificate Authority")
             return
-        
+
         print("Step 2: Creating server certificate...")
-        
+
         # Create server config
         server_config = f"""[req]
 distinguished_name = req_distinguished_name
@@ -209,27 +209,27 @@ IP.4 = 192.168.1.100
 IP.5 = 192.168.0.1
 IP.6 = 10.0.0.1
 """
-        
+
         with open('server/server.conf', 'w') as f:
             f.write(server_config)
-        
+
         # Generate server private key
         server_key_cmd = f'openssl genrsa -out {key_file} 2048'
         result3 = os.system(server_key_cmd)
-        
+
         # Generate server certificate request
         csr_cmd = f'openssl req -new -key {key_file} -out server/server.csr -config server/server.conf'
         result4 = os.system(csr_cmd)
-        
+
         # Sign server certificate with CA
         sign_cmd = f'openssl x509 -req -in server/server.csr -CA {ca_cert_file} -CAkey {ca_key_file} -CAcreateserial -out {cert_file} -days 365 -extensions v3_req -extfile server/server.conf'
         result5 = os.system(sign_cmd)
-        
+
         # Clean up temporary files
         for temp_file in ['server/ca.conf', 'server/server.conf', 'server/server.csr', 'server/ca.srl']:
             if os.path.exists(temp_file):
                 os.unlink(temp_file)
-        
+
         if result3 == 0 and result4 == 0 and result5 == 0:
             print("Certificate Authority and server certificates generated successfully!")
             print(f"CA Certificate: {ca_cert_file} (install this on Android)")
@@ -242,7 +242,7 @@ IP.6 = 10.0.0.1
             print("3. Select the ca.crt file")
             print("4. Name it 'StreamOverlay CA'")
             print("5. Choose 'VPN and apps' usage")
-            
+
             # Restart server if it was running
             if server_was_running:
                 print("\nRestarting server with new certificates...")
@@ -251,7 +251,7 @@ IP.6 = 10.0.0.1
         else:
             print("Error generating server certificates")
             print("Make sure openssl is installed on your system")
-            
+
     except Exception as e:
         print(f"Error generating certificates: {e}")
 
@@ -259,11 +259,11 @@ def is_running():
     """Check if server is running"""
     if not os.path.exists(PID_FILE):
         return False
-    
+
     try:
         with open(PID_FILE, 'r') as f:
             pid = int(f.read().strip())
-        
+
         # Check if process exists
         os.kill(pid, 0)
         return True
@@ -277,9 +277,9 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python3 ctrl {start|stop|restart|status|logs|keys}")
         sys.exit(1)
-    
+
     command = sys.argv[1].lower()
-    
+
     if command == 'start':
         start()
     elif command == 'stop':

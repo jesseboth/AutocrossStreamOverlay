@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Autocross Speed & G-Force Overlay</title>
-    
+
     <style>
         * {
             margin: 0;
@@ -28,7 +28,7 @@
             color: white;
             padding: 19px 24px;
             border-radius: 8px;
-            border: 2px solid #007BFF;
+            border: 3px solid #007BFF;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
@@ -223,20 +223,20 @@
                 padding: 12px 16px;
                 gap: 15px;
             }
-            
+
             .speed-value {
                 font-size: 28px;
             }
-            
+
             .data-display.speed-only .speed-value {
                 font-size: 40px;
             }
-            
+
             .g-force-circle {
                 width: 100px;
                 height: 100px;
             }
-            
+
             .g-force-labels {
                 width: 100px;
             }
@@ -246,12 +246,12 @@
 <body>
     <div class="data-display">
         <div class="status-dot offline" id="statusDot"></div>
-        
+
         <div class="speed-section">
             <div class="speed-value" id="speedValue">--</div>
             <div class="speed-label">mph</div>
         </div>
-        
+
         <div class="g-force-section">
             <div class="g-force-circle">
                 <div class="g-force-crosshairs"></div>
@@ -274,18 +274,18 @@
                 this.gLongitudinal = 0;
                 this.gVertical = 0;
                 this.maxGForce = 0;
-                
+
                 // Server receiver
                 this.isReceivingServerData = false;
                 this.lastServerData = null;
                 this.pollInterval = null;
                 this.dataRetentionTimeout = null;
-                
+
                 // Latency tracking
                 this.requestStartTime = 0;
                 this.currentLatency = 0;
                 this.lastDataTime = 0;
-                
+
                 // Only use server data - no local GPS
                 this.initServerReceiver();
             }
@@ -298,10 +298,10 @@
 
             async initServerReceiver() {
                 console.log('Initializing server GPS receiver...');
-                
+
                 // Start polling for GPS data from server
                 this.startPolling();
-                
+
                 // Initially offline
                 this.updateStatusDot('offline');
             }
@@ -310,36 +310,36 @@
                 // Poll server for GPS data every 200ms (5Hz)
                 this.pollInterval = setInterval(async () => {
                     this.requestStartTime = Date.now();
-                    
+
                     try {
                         const response = await fetch('/api/gps-data');
                         const responseTime = Date.now();
                         this.currentLatency = responseTime - this.requestStartTime;
-                        
+
                         if (response.ok) {
                             const result = await response.json();
                             if (result.data) {
                                 this.handleServerData(result.data);
                                 this.lastDataTime = Date.now();
-                                
+
                                 if (!this.isReceivingServerData) {
                                     console.log('Started receiving server GPS data');
                                     this.isReceivingServerData = true;
                                 }
-                                
+
                                 // Update status based on latency
-                                if (this.currentLatency > 150) {
+                                if (this.currentLatency > 250) {
                                     this.updateStatusDot('high-latency');
                                 } else {
                                     this.updateStatusDot('good');
                                 }
-                                
+
                                 // Clear any existing data retention timeout
                                 if (this.dataRetentionTimeout) {
                                     clearTimeout(this.dataRetentionTimeout);
                                     this.dataRetentionTimeout = null;
                                 }
-                                
+
                             } else {
                                 // No data available
                                 this.handleNoData();
@@ -358,7 +358,7 @@
                 if (this.isReceivingServerData) {
                     console.log('No server GPS data available');
                     this.isReceivingServerData = false;
-                    
+
                     // Start data retention timer (5 seconds)
                     this.dataRetentionTimeout = setTimeout(() => {
                         // Only clear data if speed is not 0
@@ -366,7 +366,7 @@
                             this.fallbackToNoData();
                         }
                     }, 5000);
-                    
+
                     this.updateStatusDot('offline');
                 }
             }
@@ -380,48 +380,48 @@
                 // Update display based on what data is available
                 const hasSpeed = gpsData.hasOwnProperty('speed');
                 const hasGForce = gpsData.hasOwnProperty('gLateral') && gpsData.hasOwnProperty('gLongitudinal');
-                
+
                 // Update speed if available
                 if (hasSpeed) {
                     this.currentSpeed = gpsData.speed || 0;
                     document.getElementById('speedValue').textContent = Math.round(this.currentSpeed);
                 }
-                
+
                 // Update G-force if available
                 if (hasGForce) {
                     this.gLateral = gpsData.gLateral || 0;
                     this.gLongitudinal = gpsData.gLongitudinal || 0;
                     this.gVertical = gpsData.gVertical || 0;
                 }
-                
+
                 // Update display layout based on available data
                 this.updateDisplayLayout({
                     showSpeed: hasSpeed,
                     showGForce: hasGForce
                 });
-                
+
                 // Update G-force display if we have G-force data
                 if (hasGForce) {
                     this.updateGForceDisplayFromServer();
                 }
-                
+
                 // Store last received data
                 this.lastServerData = {
                     ...gpsData,
                     receivedAt: Date.now()
                 };
-                
+
                 console.log(`Server data: Speed=${hasSpeed ? this.currentSpeed.toFixed(1) + 'mph' : 'N/A'}, G-force=${hasGForce ? this.gLateral.toFixed(2) + '/' + this.gLongitudinal.toFixed(2) : 'N/A'}`);
             }
 
             updateGForceDisplayFromServer() {
                 const dot = document.getElementById('gForceDot');
                 const radius = 66;
-                
+
                 // Use server G-force data directly (already processed by sender)
                 const finalLateral = this.gLateral;
                 const finalLongitudinal = this.gLongitudinal;
-                
+
                 // When stationary (speed = 0), keep dot centered
                 if (this.currentSpeed === 0) {
                     dot.style.left = '50%';
@@ -429,25 +429,25 @@
                     dot.className = 'g-force-dot';
                     return;
                 }
-                
+
                 // Calculate dot position
                 const maxG = 2.0;
                 const x = Math.max(-maxG, Math.min(maxG, finalLateral)) / maxG * radius;
                 const y = Math.max(-maxG, Math.min(maxG, -finalLongitudinal)) / maxG * radius;
-                
+
                 // Position dot
                 dot.style.left = `${50 + (x / radius) * 50}%`;
                 dot.style.top = `${50 + (y / radius) * 50}%`;
-                
+
                 // Calculate total G-force
                 const totalG = Math.sqrt(finalLateral * finalLateral + finalLongitudinal * finalLongitudinal);
-                
+
                 // Update max G-force
                 if (totalG > this.maxGForce) {
                     this.maxGForce = totalG;
                     document.getElementById('maxGForce').textContent = `Max: ${this.maxGForce.toFixed(1)}g`;
                 }
-                
+
                 // Color dot based on G-force intensity
                 dot.className = 'g-force-dot' + this.getGForceClass(totalG);
             }
@@ -455,35 +455,34 @@
             fallbackToNoData() {
                 console.log('No server data available');
                 this.isReceivingServerData = false;
-                this.updateBorderColor('#dc3545'); // Red border for no data
-                
+
                 // Show "No Data" state
                 document.getElementById('speedValue').textContent = '--';
-                
+
                 // Center the G-force dot
                 const dot = document.getElementById('gForceDot');
                 dot.style.left = '50%';
                 dot.style.top = '50%';
                 dot.className = 'g-force-dot';
-                
-                // Reset display to show both sections but with no data
-                this.updateDisplayLayout({
-                    showSpeed: true,
-                    showGForce: true
-                });
+
+                // // Reset display to show both sections but with no data
+                // this.updateDisplayLayout({
+                //     showSpeed: true,
+                //     showGForce: true
+                // });
             }
 
             updateDisplayLayout(displaySettings) {
                 const dataDisplay = document.querySelector('.data-display');
                 const speedSection = document.querySelector('.speed-section');
                 const gForceSection = document.querySelector('.g-force-section');
-                
+
                 const showSpeed = displaySettings.showSpeed;
                 const showGForce = displaySettings.showGForce;
-                
+
                 // Remove existing layout classes
                 dataDisplay.classList.remove('speed-only', 'gforce-only', 'minimal');
-                
+
                 if (showSpeed && showGForce) {
                     // Both visible - default layout
                     speedSection.style.display = 'flex';
@@ -507,15 +506,8 @@
                     gForceSection.style.display = 'none';
                     dataDisplay.classList.add('minimal');
                 }
-                
-                console.log(`Display updated: Speed=${showSpeed}, G-Force=${showGForce}`);
-            }
 
-            updateBorderColor(color) {
-                const display = document.querySelector('.data-display');
-                if (display) {
-                    display.style.borderColor = color;
-                }
+                console.log(`Display updated: Speed=${showSpeed}, G-Force=${showGForce}`);
             }
         }
 
