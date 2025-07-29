@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamOverlay - Install Certificate</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #007BFF;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .download-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .download-btn {
+            display: inline-block;
+            background: #007BFF;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px;
+        }
+        .download-btn:hover {
+            background: #0056b3;
+        }
+        .steps {
+            margin: 20px 0;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+            border-left: 4px solid #007BFF;
+        }
+        .step h3 {
+            margin: 0 0 10px 0;
+            color: #007BFF;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .verify-link {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .verify-btn {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .verify-btn:hover {
+            background: #218838;
+        }
+        .ip-display {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 3px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 StreamOverlay Certificate Installation</h1>
+        
+        <div class="warning">
+            <strong>One-time setup required:</strong> Install the StreamOverlay CA certificate to access the HTTPS overlay without browser warnings.
+        </div>
+        
+        <div class="download-section">
+            <h2>Step 1: Download Certificate</h2>
+            <a href="/ca.crt" class="download-btn" download="StreamOverlay-CA.crt">
+                📥 Download CA Certificate
+            </a>
+            <p><small>File: StreamOverlay-CA.crt</small></p>
+        </div>
+        
+        <div class="steps">
+            <h2>Step 2: Install on Android</h2>
+            
+            <div class="step">
+                <h3>1. Download Complete</h3>
+                <p>After clicking the download button above, the certificate file will be saved to your Downloads folder.</p>
+            </div>
+            
+            <div class="step">
+                <h3>2. Open Settings</h3>
+                <p>Go to <strong>Settings → Security → Encryption & credentials</strong></p>
+                <p><em>Note: Path may vary by Android version/manufacturer</em></p>
+            </div>
+            
+            <div class="step">
+                <h3>3. Install Certificate</h3>
+                <p>Tap <strong>"Install from device storage"</strong> or <strong>"Install a certificate"</strong></p>
+            </div>
+            
+            <div class="step">
+                <h3>4. Select File</h3>
+                <p>Navigate to Downloads and select <strong>StreamOverlay-CA.crt</strong></p>
+            </div>
+            
+            <div class="step">
+                <h3>5. Name Certificate</h3>
+                <p>Enter name: <strong>StreamOverlay CA</strong></p>
+                <p>Choose usage: <strong>VPN and apps</strong></p>
+            </div>
+        </div>
+        
+        <div class="verify-link">
+            <h2>Step 3: Verify Installation</h2>
+            <a href="verify.html" class="verify-btn">✅ Test Certificate</a>
+        </div>
+        
+        <div class="success">
+            <strong>After installation:</strong> Access your speed overlay at<br>
+            <span class="ip-display">https://&lt;your-ip&gt;:1900/speed.html</span><br>
+            <em>No browser warnings!</em>
+        </div>
+        
+        <script>
+            // Try to display the current server IP
+            if (window.location.hostname !== 'localhost') {
+                const currentIP = window.location.hostname;
+                document.querySelectorAll('.ip-display').forEach(el => {
+                    el.textContent = el.textContent.replace('<your-ip>', currentIP);
+                });
+            }
+        </script>
+    </div>
+</body>
+</html>

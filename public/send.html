@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamOverlay - GPS Sender</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0;
+        }
+
+        .sender-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2em;
+            font-weight: 300;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .status.connecting {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            color: #ffc107;
+        }
+
+        .status.connected {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.5);
+            color: #28a745;
+        }
+
+        .status.error {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.5);
+            color: #dc3545;
+        }
+
+        .data-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .data-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .data-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .data-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .connection-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        .display-controls {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .display-controls h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.1em;
+            color: #fff;
+            text-align: center;
+        }
+
+        .control-row {
+            margin: 12px 0;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-switch input[type="checkbox"] {
+            display: none;
+        }
+
+        .slider {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            transition: all 0.3s ease;
+            margin-right: 12px;
+        }
+
+        .slider::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch input[type="checkbox"]:checked + .slider {
+            background: #28a745;
+        }
+
+        .toggle-switch input[type="checkbox"]:checked + .slider::before {
+            transform: translateX(26px);
+        }
+
+        .toggle-switch .label {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        @media (max-width: 480px) {
+            .sender-container {
+                padding: 20px;
+            }
+            
+            .data-display {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .data-value {
+                font-size: 1.5em;
+            }
+            
+            .display-controls {
+                margin-top: 20px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sender-container">
+        <h1>📡 GPS Sender</h1>
+        
+        <div class="status connecting" id="status">Initializing GPS tracking...</div>
+        
+        <div class="data-display">
+            <div class="data-item">
+                <div class="data-value" id="speedValue">0</div>
+                <div class="data-label">mph</div>
+            </div>
+            
+            <div class="data-item">
+                <div class="data-value" id="gForceValue">0.0</div>
+                <div class="data-label">g-force</div>
+            </div>
+        </div>
+        
+        <div class="connection-info" id="connectionInfo">
+            Starting GPS tracking...
+        </div>
+        
+        <div class="stats">
+            <span>Sent: <span id="packetsSent">0</span></span>
+            <span>Rate: <span id="sendRate">0</span> Hz</span>
+            <span>Running: <span id="runningTime">0s</span></span>
+        </div>
+        
+        <div class="display-controls">
+            <h3>Display Settings</h3>
+            <div class="control-row">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="showSpeed" checked>
+                    <span class="slider"></span>
+                    <span class="label">Send Speed</span>
+                </label>
+            </div>
+            <div class="control-row">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="showGForce" checked>
+                    <span class="slider"></span>
+                    <span class="label">Send G-Force</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class GPSSender {
+            constructor() {
+                this.isTracking = false;
+                this.watchId = null;
+                this.currentSpeed = 0;
+                
+                // Accelerometer data
+                this.gLateral = 0;
+                this.gLongitudinal = 0;
+                this.gVertical = 0;
+                
+                // Calibration offsets
+                this.calibrationOffsets = {
+                    lateral: 0,
+                    longitudinal: 0,
+                    vertical: 0
+                };
+                
+                this.manualOffsets = {
+                    lateral: 0.0,
+                    longitudinal: 0.0
+                };
+                
+                this.isCalibrated = false;
+                
+                // Server communication
+                this.isConnected = false;
+                this.sendInterval = null;
+                
+                // Statistics
+                this.packetsSent = 0;
+                this.startTime = Date.now();
+                this.lastSendTime = 0;
+                this.sendRate = 0;
+                
+                this.initTracking();
+                this.initAccelerometer();
+                this.initDisplayControls();
+                this.startSending();
+                this.startStatsUpdate();
+            }
+
+            updateStatus(message, type = 'connecting') {
+                const statusDiv = document.getElementById('status');
+                statusDiv.textContent = message;
+                statusDiv.className = `status ${type}`;
+            }
+
+            updateConnectionInfo(message) {
+                document.getElementById('connectionInfo').textContent = message;
+            }
+
+            initTracking() {
+                if (!navigator.geolocation) {
+                    this.updateStatus('Geolocation not supported', 'error');
+                    return;
+                }
+
+                this.isTracking = true;
+                
+                this.watchId = navigator.geolocation.watchPosition(
+                    (position) => this.updateSpeed(position),
+                    (error) => this.handleLocationError(error),
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            }
+
+            async initAccelerometer() {
+                if (typeof DeviceMotionEvent !== 'undefined') {
+                    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                        try {
+                            const permission = await DeviceMotionEvent.requestPermission();
+                            if (permission === 'granted') {
+                                this.startAccelerometer();
+                            } else {
+                                console.log('Accelerometer permission denied');
+                            }
+                        } catch (error) {
+                            console.error('Error requesting accelerometer permission:', error);
+                        }
+                    } else {
+                        this.startAccelerometer();
+                    }
+                } else {
+                    console.log('DeviceMotionEvent not supported');
+                }
+            }
+
+            startAccelerometer() {
+                window.addEventListener('devicemotion', (event) => {
+                    if (event.accelerationIncludingGravity) {
+                        const rawX = event.accelerationIncludingGravity.x || 0;
+                        const rawY = event.accelerationIncludingGravity.y || 0;
+                        const rawZ = event.accelerationIncludingGravity.z || 0;
+                        
+                        this.gLateral = (rawX - this.calibrationOffsets.lateral) / 9.81;
+                        this.gLongitudinal = (rawY - this.calibrationOffsets.longitudinal) / 9.81;
+                        this.gVertical = (rawZ - this.calibrationOffsets.vertical) / 9.81;
+                        
+                        this.updateDisplay();
+                    }
+                });
+            }
+
+            updateSpeed(position) {
+                this.currentSpeed = (position.coords.speed || 0) * 2.237;
+                
+                if (this.currentSpeed === 0 && !this.isCalibrated) {
+                    this.calibrateAccelerometer();
+                }
+                
+                if (this.currentSpeed > 0) {
+                    this.isCalibrated = false;
+                }
+                
+                this.updateDisplay();
+            }
+
+            calibrateAccelerometer() {
+                if (typeof DeviceMotionEvent !== 'undefined') {
+                    const handler = (event) => {
+                        if (event.accelerationIncludingGravity) {
+                            this.calibrationOffsets.lateral = event.accelerationIncludingGravity.x || 0;
+                            this.calibrationOffsets.longitudinal = event.accelerationIncludingGravity.y || 0;
+                            this.calibrationOffsets.vertical = event.accelerationIncludingGravity.z || 0;
+                            
+                            this.isCalibrated = true;
+                            console.log('Accelerometer calibrated');
+                            
+                            window.removeEventListener('devicemotion', handler);
+                        }
+                    };
+                    
+                    window.addEventListener('devicemotion', handler);
+                }
+            }
+
+            getDeviceOrientation() {
+                if (screen.orientation) {
+                    return screen.orientation.angle;
+                }
+                if (typeof window.orientation !== 'undefined') {
+                    return window.orientation;
+                }
+                return 0;
+            }
+
+            transformGForceForOrientation(gLateral, gLongitudinal) {
+                const orientation = this.getDeviceOrientation();
+                
+                let displayLateral, displayLongitudinal;
+                
+                switch (orientation) {
+                    case 0:
+                        displayLateral = gLateral;
+                        displayLongitudinal = gLongitudinal;
+                        break;
+                    case 90:
+                        displayLateral = -gLongitudinal;
+                        displayLongitudinal = gLateral;
+                        break;
+                    case -90:
+                    case 270:
+                        displayLateral = gLongitudinal;
+                        displayLongitudinal = -gLateral;
+                        break;
+                    case 180:
+                        displayLateral = -gLateral;
+                        displayLongitudinal = -gLongitudinal;
+                        break;
+                    default:
+                        displayLateral = gLateral;
+                        displayLongitudinal = gLongitudinal;
+                        break;
+                }
+                
+                return { lateral: displayLateral, longitudinal: displayLongitudinal };
+            }
+
+            updateDisplay() {
+                document.getElementById('speedValue').textContent = Math.round(this.currentSpeed);
+                
+                const transformed = this.transformGForceForOrientation(this.gLateral, this.gLongitudinal);
+                const finalLateral = transformed.lateral - this.manualOffsets.lateral;
+                const finalLongitudinal = transformed.longitudinal - this.manualOffsets.longitudinal;
+                const totalG = Math.sqrt(finalLateral * finalLateral + finalLongitudinal * finalLongitudinal);
+                
+                document.getElementById('gForceValue').textContent = totalG.toFixed(1);
+            }
+
+            startSending() {
+                // Send GPS data every 200ms (5Hz)
+                this.sendInterval = setInterval(() => {
+                    this.sendGPSData();
+                }, 200);
+                
+                this.updateStatus('Sending GPS data to server', 'connected');
+                this.updateConnectionInfo('Broadcasting GPS data via server API');
+            }
+
+            async sendGPSData() {
+                try {
+                    // Get current display settings
+                    const showSpeed = document.getElementById('showSpeed').checked;
+                    const showGForce = document.getElementById('showGForce').checked;
+                    
+                    // Only send enabled data
+                    const gpsData = {
+                        timestamp: Date.now()
+                    };
+                    
+                    if (showSpeed) {
+                        gpsData.speed = this.currentSpeed;
+                    }
+                    
+                    if (showGForce) {
+                        const transformed = this.transformGForceForOrientation(this.gLateral, this.gLongitudinal);
+                        gpsData.gLateral = transformed.lateral - this.manualOffsets.lateral;
+                        gpsData.gLongitudinal = transformed.longitudinal - this.manualOffsets.longitudinal;
+                        gpsData.gVertical = this.gVertical;
+                    }
+                    
+                    // Send to server
+                    const response = await fetch('/api/gps-data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(gpsData)
+                    });
+                    
+                    if (response.ok) {
+                        this.packetsSent++;
+                        this.isConnected = true;
+                        
+                        // Calculate send rate
+                        const now = Date.now();
+                        if (this.lastSendTime > 0) {
+                            const timeDiff = (now - this.lastSendTime) / 1000;
+                            this.sendRate = Math.round(1 / timeDiff);
+                        }
+                        this.lastSendTime = now;
+                        
+                    } else {
+                        throw new Error('Server error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error sending GPS data:', error);
+                    this.isConnected = false;
+                    this.updateStatus('Server connection error', 'error');
+                }
+            }
+
+            initDisplayControls() {
+                // Add event listeners for toggle switches
+                const showSpeedToggle = document.getElementById('showSpeed');
+                const showGForceToggle = document.getElementById('showGForce');
+                
+                showSpeedToggle.addEventListener('change', () => {
+                    console.log('Speed sending:', showSpeedToggle.checked ? 'ON' : 'OFF');
+                    this.updateConnectionInfo(`Sending - Speed: ${showSpeedToggle.checked ? 'ON' : 'OFF'}, G-Force: ${showGForceToggle.checked ? 'ON' : 'OFF'}`);
+                });
+                
+                showGForceToggle.addEventListener('change', () => {
+                    console.log('G-Force sending:', showGForceToggle.checked ? 'ON' : 'OFF');
+                    this.updateConnectionInfo(`Sending - Speed: ${showSpeedToggle.checked ? 'ON' : 'OFF'}, G-Force: ${showGForceToggle.checked ? 'ON' : 'OFF'}`);
+                });
+                
+                // Load saved settings from localStorage
+                const savedSpeedSetting = localStorage.getItem('showSpeed');
+                const savedGForceSetting = localStorage.getItem('showGForce');
+                
+                if (savedSpeedSetting !== null) {
+                    showSpeedToggle.checked = savedSpeedSetting === 'true';
+                }
+                if (savedGForceSetting !== null) {
+                    showGForceToggle.checked = savedGForceSetting === 'true';
+                }
+                
+                // Save settings when changed
+                showSpeedToggle.addEventListener('change', () => {
+                    localStorage.setItem('showSpeed', showSpeedToggle.checked);
+                });
+                
+                showGForceToggle.addEventListener('change', () => {
+                    localStorage.setItem('showGForce', showGForceToggle.checked);
+                });
+                
+                console.log('Display controls initialized');
+            }
+
+            startStatsUpdate() {
+                setInterval(() => {
+                    document.getElementById('packetsSent').textContent = this.packetsSent;
+                    document.getElementById('sendRate').textContent = this.sendRate;
+                    
+                    const runningTime = Math.floor((Date.now() - this.startTime) / 1000);
+                    document.getElementById('runningTime').textContent = `${runningTime}s`;
+                }, 1000);
+            }
+
+            handleLocationError(error) {
+                console.error('Location error:', error);
+                this.updateStatus('GPS error: ' + error.message, 'error');
+            }
+        }
+
+        // Initialize GPS sender when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new GPSSender();
+        });
+    </script>
+</body>
+</html>

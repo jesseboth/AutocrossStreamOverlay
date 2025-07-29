@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamOverlay - Autocross Speed & G-Force Overlay</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .subtitle {
+            text-align: center;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            font-size: 1.2em;
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .card h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.4em;
+            color: #fff;
+        }
+        .card p {
+            margin: 0 0 20px 0;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+        .btn {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .btn.primary {
+            background: #007BFF;
+            border-color: #007BFF;
+        }
+        .btn.primary:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+        }
+        .btn.success {
+            background: #28a745;
+            border-color: #28a745;
+        }
+        .btn.success:hover {
+            background: #218838;
+            border-color: #218838;
+        }
+        .btn.warning {
+            background: #ffc107;
+            border-color: #ffc107;
+            color: #212529;
+        }
+        .btn.warning:hover {
+            background: #e0a800;
+            border-color: #e0a800;
+        }
+        .status-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-https {
+            background: #28a745;
+        }
+        .status-http {
+            background: #007BFF;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+        .emoji {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏎️ StreamOverlay</h1>
+        <p class="subtitle">Autocross Speed & G-Force Overlay for Live Streaming</p>
+        
+        <div class="status-section">
+            <h3>🌐 Server Status</h3>
+            <p>
+                <span class="status-indicator status-https"></span>
+                <strong>HTTPS Server:</strong> <span id="httpsStatus">https://localhost:1900</span>
+            </p>
+            <p>
+                <span class="status-indicator status-http"></span>
+                <strong>HTTP Server:</strong> <span id="httpStatus">http://localhost:1901</span>
+            </p>
+        </div>
+        
+        <div class="card-grid">
+            <div class="card">
+                <div class="emoji">🚀</div>
+                <h3>Speed Overlay (Receiver)</h3>
+                <p>Displays GPS data from sender or uses local GPS as fallback. Perfect for IRL Pro streaming.</p>
+                <a href="speed.html" class="btn primary">Launch Receiver</a>
+            </div>
+            
+            <div class="card">
+                <div class="emoji">📡</div>
+                <h3>GPS Sender</h3>
+                <p>Tracks GPS and sends data to receiver via P2P connection. Use on device with good GPS signal.</p>
+                <a href="send.html" class="btn" style="background: #17a2b8; border-color: #17a2b8;">Launch Sender</a>
+            </div>
+            
+            <div class="card">
+                <div class="emoji">🔒</div>
+                <h3>Install Certificate</h3>
+                <p>Install the CA certificate on your device to access HTTPS without browser warnings.</p>
+                <a href="install.html" class="btn warning">Install Certificate</a>
+            </div>
+            
+            <div class="card">
+                <div class="emoji">✅</div>
+                <h3>Verify Setup</h3>
+                <p>Test if your certificate is properly installed and working correctly.</p>
+                <a href="verify.html" class="btn success">Verify Certificate</a>
+            </div>
+            
+            <div class="card">
+                <div class="emoji">🔗</div>
+                <h3>P2P Test</h3>
+                <p>Test WebRTC peer-to-peer connection between HTTP and HTTPS devices for GPS data sharing.</p>
+                <a href="p2p-test.html" class="btn" style="background: #6f42c1; border-color: #6f42c1;">Test P2P Connection</a>
+            </div>
+        </div>
+        
+        <div class="status-section">
+            <h3>📱 P2P Setup Guide</h3>
+            <ol style="text-align: left; max-width: 500px; margin: 0 auto;">
+                <li><strong>Install Certificate:</strong> Click "Install Certificate" and follow instructions (one-time setup)</li>
+                <li><strong>Device A (GPS source):</strong> Open "GPS Sender" via HTTPS - tracks and broadcasts GPS data</li>
+                <li><strong>Device B (IRL Pro):</strong> Open "Speed Overlay" via HTTP - receives P2P data or uses local GPS</li>
+                <li><strong>Auto-connect:</strong> Devices automatically establish P2P connection within seconds</li>
+                <li><strong>Visual feedback:</strong> Green border = P2P connected, Blue border = Local GPS</li>
+            </ol>
+        </div>
+        
+        <div class="status-section">
+            <h3>🔗 Direct Access URLs</h3>
+            <div style="font-family: monospace; font-size: 0.9em; text-align: left;">
+                <p><strong>HTTPS (Mobile):</strong> <span id="httpsUrl">https://localhost:1900/speed.html</span></p>
+                <p><strong>HTTP (IRL Pro):</strong> <span id="httpUrl">http://localhost:1901/speed.html</span></p>
+                <p><strong>CA Certificate:</strong> <span id="caUrl">http://localhost:1901/ca.crt</span></p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>StreamOverlay v1.0 - Built for autocross enthusiasts</p>
+            <p>Compatible with IRL Pro, KSWeb, and other streaming platforms</p>
+        </div>
+    </div>
+    
+    <script>
+        // Update URLs with current server IP
+        const currentIP = window.location.hostname;
+        const currentPort = window.location.port;
+        
+        if (currentIP !== 'localhost') {
+            // Update status indicators
+            document.getElementById('httpsStatus').textContent = `https://${currentIP}:1900`;
+            document.getElementById('httpStatus').textContent = `http://${currentIP}:1901`;
+            
+            // Update direct access URLs
+            document.getElementById('httpsUrl').textContent = `https://${currentIP}:1900/speed.html`;
+            document.getElementById('httpUrl').textContent = `http://${currentIP}:1901/speed.html`;
+            document.getElementById('caUrl').textContent = `http://${currentIP}:1901/ca.crt`;
+        }
+        
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const link = this.querySelector('.btn');
+                    if (link) {
+                        window.location.href = link.href;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

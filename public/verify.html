@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamOverlay - Certificate Verification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #28a745;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .next-steps {
+            margin: 30px 0;
+        }
+        .link-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .overlay-link {
+            display: inline-block;
+            background: #007BFF;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px;
+        }
+        .overlay-link:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .ip-display {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 3px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Certificate Verification Successful!</h1>
+        
+        <div class="success">
+            <h2>🎉 Great! Your certificate is working perfectly.</h2>
+            <p>You're seeing this page without any browser warnings, which means the StreamOverlay CA certificate is properly installed.</p>
+        </div>
+        
+        <div class="next-steps">
+            <h2>Ready to Use StreamOverlay</h2>
+            
+            <div class="link-box">
+                <h3>🏎️ Speed & G-Force Overlay</h3>
+                <a href="speed.html" class="overlay-link" id="httpsLink">
+                    Open Speed Overlay
+                </a>
+                <p><small>GPS speed tracking with accelerometer G-force display</small></p>
+            </div>
+        </div>
+        
+        <div class="info">
+            <h3>📱 Usage Tips:</h3>
+            <ul>
+                <li><strong>Grant permissions:</strong> Allow location and motion access when prompted</li>
+                <li><strong>Calibration:</strong> Overlay auto-calibrates when speed = 0</li>
+                <li><strong>Mounting:</strong> Keep phone in consistent horizontal position</li>
+                <li><strong>Streaming:</strong> Use with IRL Pro or similar streaming software</li>
+            </ul>
+        </div>
+        
+        <div class="info">
+            <h3>🔗 Access URLs:</h3>
+            <ul>
+                <li><strong>HTTPS (Mobile):</strong> <span class="ip-display" id="httpsUrl">https://&lt;your-ip&gt;:1900/speed.html</span></li>
+                <li><strong>HTTP (IRL Pro):</strong> <span class="ip-display" id="httpUrl">http://&lt;your-ip&gt;:1901/speed.html</span></li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Update URLs with current server IP
+        const currentIP = window.location.hostname;
+        const currentPort = window.location.port;
+        
+        if (currentIP !== 'localhost') {
+            // Update HTTPS link
+            const httpsLink = document.getElementById('httpsLink');
+            if (window.location.protocol === 'https:') {
+                httpsLink.href = `https://${currentIP}:1900/speed.html`;
+            }
+            
+            // Update displayed URLs
+            document.getElementById('httpsUrl').textContent = `https://${currentIP}:1900/speed.html`;
+            document.getElementById('httpUrl').textContent = `http://${currentIP}:1901/speed.html`;
+        }
+    </script>
+</body>
+</html>
