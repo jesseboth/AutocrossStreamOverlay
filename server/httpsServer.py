@@ -17,6 +17,17 @@ HOST = '0.0.0.0'
 CERT_FILE = 'server/server.crt'
 KEY_FILE = 'server/server.key'
 
+# Logging configuration
+LOG_FILE = '/tmp/https_server.log'
+MAX_LOG_LINES = 10000
+LOG_COUNTER_FILE = '/tmp/https_server_log_count.txt'
+
+# Paths to exclude from detailed logging (to reduce log noise)
+QUIET_PATHS = {
+    '/api/gps-data',  # GPS data requests happen every second
+    '/favicon.ico',   # Browser favicon requests
+}
+
 # Files to hide from web access
 HIDDEN_FILES = {
     'server.key', 'server.crt', 'https_server.py',
@@ -39,7 +50,15 @@ gps_data_storage = {
 }
 
 class SecureHTTPSHandler(http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        self.debug_info = {}
+        super().__init__(*args, **kwargs)
+
     def translate_path(self, path):
+        # Store original path for debugging
+        original_path = path
+        self.debug_info['original_path'] = original_path
+        
         # Remove query parameters and normalize path
         path = path.split('?', 1)[0]
         path = path.split('#', 1)[0]
@@ -50,7 +69,10 @@ class SecureHTTPSHandler(http.server.SimpleHTTPRequestHandler):
 
         # Handle CA certificate download
         if path == '/ca.crt':
-            return os.path.join(os.getcwd(), 'server/ca.crt')
+            translated_path = os.path.join(os.getcwd(), 'server/ca.crt')
+            self.debug_info['translated_path'] = translated_path
+            self.debug_info['block_reason'] = None
+            return translated_path
 
         # Remove leading slash and map to public directory
         if path.startswith('/'):
@@ -68,23 +90,33 @@ class SecureHTTPSHandler(http.server.SimpleHTTPRequestHandler):
 
         # Normalize the path to prevent directory traversal
         translated_path = os.path.normpath(translated_path)
+        self.debug_info['translated_path'] = translated_path
 
         # Ensure the path is within the public directory
         public_dir = os.path.join(os.getcwd(), 'public')
         if not translated_path.startswith(public_dir):
+            self.debug_info['block_reason'] = 'Directory traversal attempt blocked'
             return None
 
         filename = os.path.basename(translated_path)
 
         # Block hidden files
         if filename in HIDDEN_FILES:
+            self.debug_info['block_reason'] = f'Hidden file blocked: {filename}'
             return None
 
         # Check file extension for files (not directories)
         if os.path.isfile(translated_path):
             _, ext = os.path.splitext(filename)
             if ext.lower() not in ALLOWED_EXTENSIONS:
+                self.debug_info['block_reason'] = f'File extension not allowed: {ext}'
                 return None
+
+        # Check if file/directory exists
+        if not os.path.exists(translated_path):
+            self.debug_info['block_reason'] = 'File or directory does not exist'
+        else:
+            self.debug_info['block_reason'] = None
 
         return translated_path
 
@@ -332,7 +364,116 @@ class SecureHTTPSHandler(http.server.SimpleHTTPRequestHandler):
         message = format % args
         if any(hidden in message for hidden in HIDDEN_FILES):
             return  # Don't log requests for hidden files
-        super().log_message(format, *args)
+        
+        # Check if this is a quiet path (reduce log noise)
+        original_path = getattr(self, 'debug_info', {}).get('original_path', self.path)
+        is_quiet_path = any(quiet_path in original_path for quiet_path in QUIET_PATHS)
+        
+        # Skip logging for quiet paths unless it's an error
+        if is_quiet_path and not any(code in message for code in ['404', '500', '400', '403']):
+            return
+        
+        # Add debug information for 404 errors and other requests
+        if hasattr(self, 'debug_info') and self.debug_info:
+            translated_path = self.debug_info.get('translated_path', 'Unknown')
+            block_reason = self.debug_info.get('block_reason')
+            
+            # Check if this is a 404 error
+            if '404' in message:
+                debug_details = f" [DEBUG: Requested='{original_path}', Resolved='{translated_path}'"
+                if block_reason:
+                    debug_details += f", Reason='{block_reason}'"
+                debug_details += "]"
+                message += debug_details
+            elif any(code in message for code in ['200', '301', '302']) and not is_quiet_path:
+                # For successful requests, just show the original path for context
+                debug_details = f" [DEBUG: Requested='{original_path}']"
+                message += debug_details
+        
+        # Use custom format to display the enhanced message with log rotation
+        import sys
+        import time
+        timestamp = time.strftime('[%d/%b/%Y %H:%M:%S]', time.localtime())
+        client_address = getattr(self, 'client_address', ['Unknown', 'Unknown'])
+        log_entry = f"{client_address[0]} - - {timestamp} {message}\n"
+        
+        # Write to log with rotation
+        self.write_log_with_rotation(log_entry)
+    
+    def write_log_with_rotation(self, log_entry):
+        """Write log entry with automatic rotation after MAX_LOG_LINES"""
+        try:
+            # Get current line count
+            line_count = self.get_log_line_count()
+            
+            # Check if rotation is needed
+            if line_count >= MAX_LOG_LINES:
+                self.rotate_log()
+                line_count = 0
+            
+            # Write the log entry
+            with open(LOG_FILE, 'a') as f:
+                f.write(log_entry)
+                f.flush()
+            
+            # Update line count
+            self.update_log_line_count(line_count + 1)
+            
+            # Also write to stderr for console output
+            import sys
+            sys.stderr.write(log_entry)
+            sys.stderr.flush()
+            
+        except Exception as e:
+            # Fallback to stderr if log file operations fail
+            import sys
+            sys.stderr.write(f"Log error: {e}\n")
+            sys.stderr.write(log_entry)
+            sys.stderr.flush()
+    
+    def get_log_line_count(self):
+        """Get current log line count from counter file"""
+        try:
+            if os.path.exists(LOG_COUNTER_FILE):
+                with open(LOG_COUNTER_FILE, 'r') as f:
+                    return int(f.read().strip())
+            return 0
+        except:
+            return 0
+    
+    def update_log_line_count(self, count):
+        """Update log line count in counter file"""
+        try:
+            with open(LOG_COUNTER_FILE, 'w') as f:
+                f.write(str(count))
+        except:
+            pass  # Ignore errors updating counter
+    
+    def rotate_log(self):
+        """Rotate log file by moving current to .old and starting fresh"""
+        try:
+            if os.path.exists(LOG_FILE):
+                # Move current log to .old
+                old_log = LOG_FILE + '.old'
+                if os.path.exists(old_log):
+                    os.remove(old_log)
+                os.rename(LOG_FILE, old_log)
+            
+            # Write rotation message to new log
+            import time
+            timestamp = time.strftime('[%d/%b/%Y %H:%M:%S]', time.localtime())
+            with open(LOG_FILE, 'w') as f:
+                f.write(f"SERVER - - {timestamp} Log rotated (previous log saved as {LOG_FILE}.old)\n")
+                
+        except Exception as e:
+            # If rotation fails, just truncate the current log
+            try:
+                with open(LOG_FILE, 'w') as f:
+                    import time
+                    timestamp = time.strftime('[%d/%b/%Y %H:%M:%S]', time.localtime())
+                    f.write(f"SERVER - - {timestamp} Log truncated due to rotation error: {e}\n")
+            except:
+                pass
 
 def run_https_server():
     """Run HTTPS server in a separate thread"""

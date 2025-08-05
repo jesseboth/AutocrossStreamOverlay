@@ -58,13 +58,22 @@ def stop():
             pid = int(f.read().strip())
 
         print(f"Stopping server (PID: {pid})...")
-        os.kill(pid, signal.SIGTERM)
+        
+        # First, try to find and kill all related processes
+        kill_all_server_processes()
+        
+        # Then try to kill the main process
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass  # Process already dead
 
         # Wait for process to stop
         for _ in range(10):
             time.sleep(0.5)
             if not is_running():
                 print("Server stopped")
+                cleanup_files()
                 return
 
         # Force kill if still running
@@ -74,11 +83,34 @@ def stop():
         except ProcessLookupError:
             pass
 
+        cleanup_files()
+
     except (FileNotFoundError, ValueError, ProcessLookupError):
-        print("Error stopping server")
-        # Clean up stale PID file
-        if os.path.exists(PID_FILE):
-            os.unlink(PID_FILE)
+        print("Error stopping server - cleaning up processes...")
+        kill_all_server_processes()
+        cleanup_files()
+
+def kill_all_server_processes():
+    """Kill all server processes by name"""
+    try:
+        # Kill all python processes running httpsServer.py
+        os.system("pkill -f 'python.*httpsServer.py'")
+        time.sleep(1)
+        
+        # Force kill if any are still running
+        os.system("pkill -9 -f 'python.*httpsServer.py'")
+        
+    except Exception as e:
+        print(f"Error killing processes: {e}")
+
+def cleanup_files():
+    """Clean up PID and counter files"""
+    for file_path in [PID_FILE, '/tmp/https_server_log_count.txt']:
+        if os.path.exists(file_path):
+            try:
+                os.unlink(file_path)
+            except:
+                pass
 
 def status():
     """Check server status"""
